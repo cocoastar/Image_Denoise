@@ -2,33 +2,44 @@ import cv2
 import os
 import argparse
 import glob
+from utils import *
 import numpy as np
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
-from models import DnCNN
-from utils import *
+from model_dncnn import DnCNN
+from model_rednet import REDNet20
 
-os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+# os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # 用GPU的话把注释去掉
+# os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
-parser = argparse.ArgumentParser(description="DnCNN_Test")
+parser = argparse.ArgumentParser(description="Denoise_Test")
 parser.add_argument("--num_of_layers", type=int, default=17, help="Number of total layers")
-parser.add_argument("--logdir", type=str, default="logs", help='path of log files')
-parser.add_argument("--test_data", type=str, default='Set12', help='test on Set12 or Set68')
+parser.add_argument("--logdir", type=str, default="logs/DnCNN-S-25", help='path of log files')  # 路径自己改
+parser.add_argument("--test_data", type=str, default='Set12', help='test on Set12 or Set68')  # test dataset
 parser.add_argument("--test_noiseL", type=float, default=25, help='noise level used on test set')
+parser.add_argument("--model", type=str, default='DnCNN', help='type of the model')  # 换模型调整此项，red的话改成REDNet
 opt = parser.parse_args()
 
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+
 def normalize(data):
-    return data/255.
+    return data / 255.
+
 
 def main():
     # Build model
     print('Loading model ...\n')
-    net = DnCNN(channels=1, num_of_layers=opt.num_of_layers)
+    if opt.model == 'REDNet':
+        net = REDNet20()
+    elif opt.model == 'DnCNN':
+        net = DnCNN(channels=1, num_of_layers=opt.num_of_layers)
     device_ids = [0]
-    model = nn.DataParallel(net, device_ids=device_ids).cuda()
-    model.load_state_dict(torch.load(os.path.join(opt.logdir, 'net.pth')))
+    model = nn.DataParallel(net, device_ids=device_ids).to(device)
+    model.load_state_dict(torch.load(os.path.join(opt.logdir, 'net.pth'), map_location=torch.device('cpu')))
+    # 我用的CPU，必须要加map_location，你们用GPU的话用下面这一句
+    # model.load_state_dict(torch.load(os.path.join(opt.logdir, 'net.pth')))
     model.eval()
     # load data info
     print('Loading data info ...\n')
@@ -39,25 +50,25 @@ def main():
     for f in files_source:
         # image
         Img = cv2.imread(f)
-        Img = normalize(np.float32(Img[:,:,0]))
+        Img = normalize(np.float32(Img[:, :, 0]))
         Img = np.expand_dims(Img, 0)
         Img = np.expand_dims(Img, 1)
         ISource = torch.Tensor(Img)
         # noise
-        noise = torch.FloatTensor(ISource.size()).normal_(mean=0, std=opt.test_noiseL/255.)
+        noise = torch.FloatTensor(ISource.size()).normal_(mean=0, std=opt.test_noiseL / 255.)
         # noisy image
         INoisy = ISource + noise
-        ISource, INoisy = Variable(ISource.cuda()), Variable(INoisy.cuda())
-        with torch.no_grad(): # this can save much memory
-            Out = torch.clamp(INoisy-model(INoisy), 0., 1.)
-        ## if you are using older version of PyTorch, torch.no_grad() may not be supported
-        # ISource, INoisy = Variable(ISource.cuda(),volatile=True), Variable(INoisy.cuda(),volatile=True)
-        # Out = torch.clamp(INoisy-model(INoisy), 0., 1.)
+        ISource, INoisy = Variable(ISource.to(device)), Variable(INoisy.to(device))
+        with torch.no_grad():  # this can save much memory
+            Out = model(INoisy)
+            if opt.model == 'DnCNN':
+                Out = torch.clamp(INoisy - model(INoisy), 0., 1.)
         psnr = batch_PSNR(Out, ISource, 1.)
         psnr_test += psnr
         print("%s PSNR %f" % (f, psnr))
     psnr_test /= len(files_source)
     print("\nPSNR on test data %f" % psnr_test)
+
 
 if __name__ == "__main__":
     main()
