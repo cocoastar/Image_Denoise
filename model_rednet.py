@@ -87,16 +87,26 @@ class REDNet30(nn.Module):
         conv_layers = []
         deconv_layers = []
 
-        conv_layers.append(nn.Sequential(nn.Conv2d(3, num_features, kernel_size=3, stride=2, padding=1),
-                                         nn.ReLU(inplace=True)))
+        conv_layers.append(nn.Sequential(nn.Conv2d(1, num_features, kernel_size=3, stride=2, padding=1),
+                                         nn.ReLU(inplace=True),
+                                         nn.AvgPool2d(kernel_size=2, stride=2)))#下采样
         for i in range(num_layers - 1):
             conv_layers.append(nn.Sequential(nn.Conv2d(num_features, num_features, kernel_size=3, padding=1),
                                              nn.ReLU(inplace=True)))
 
-        for i in range(num_layers - 1):
+        for i in range(num_layers - 2):
             deconv_layers.append(nn.Sequential(nn.ConvTranspose2d(num_features, num_features, kernel_size=3, padding=1),
                                                nn.ReLU(inplace=True)))
-        deconv_layers.append(nn.ConvTranspose2d(num_features, 3, kernel_size=3, stride=2, padding=1, output_padding=1))
+        '''deconv_layers.append(nn.Sequential(nn.ConvTranspose2d(num_features, num_features*4, kernel_size=3, padding=1),
+                                               nn.ReLU(inplace=True),
+                                               nn.PixelShuffle(2))) #pixel上采样
+        '''
+        deconv_layers.append(nn.Sequential(nn.ConvTranspose2d(num_features, num_features, kernel_size=3, padding=1),
+                                            nn.ReLU(inplace=True),
+                                            nn.Upsample(mode='bicubic',scale_factor=2),
+                                            nn.Conv2d(num_features,num_features,kernel_size=3,stride=1,padding=1))) #卷积上采样
+                                                #由于反卷积上采样容易生成artifact，不采用
+        deconv_layers.append(nn.ConvTranspose2d(num_features, 1, kernel_size=3, stride=2, padding=1, output_padding=1))
 
         self.conv_layers = nn.Sequential(*conv_layers)
         self.deconv_layers = nn.Sequential(*deconv_layers)

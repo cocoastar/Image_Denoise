@@ -12,14 +12,16 @@ class DnCNN(nn.Module):
         layers.append(nn.Conv2d(in_channels=channels, out_channels=features, kernel_size=kernel_size, padding=padding,
                                 bias=False))
         layers.append(nn.ReLU(inplace=True))
+        layers.append(nn.AvgPool2d(stride=2,kernel_size=2))#下采样
         for _ in range(num_of_layers - 2):
             layers.append(
                 nn.Conv2d(in_channels=features, out_channels=features, kernel_size=kernel_size, padding=padding,
                           bias=False))
             layers.append(nn.BatchNorm2d(features))
             layers.append(nn.ReLU(inplace=True))
-        layers.append(nn.Conv2d(in_channels=features, out_channels=channels, kernel_size=kernel_size, padding=padding,
+        layers.append(nn.Conv2d(in_channels=features, out_channels=4*channels, kernel_size=kernel_size, padding=padding,
                                 bias=False))
+        layers.append(nn.PixelShuffle(2))
         self.dncnn = nn.Sequential(*layers)
 
     def forward(self, x):

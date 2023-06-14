@@ -6,7 +6,7 @@ from torch import nn
 import torch.optim as optim
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
-from model_rednet import REDNet20
+from model_rednet import REDNet30
 from model_dncnn import DnCNN
 from dataset import prepare_data, Dataset
 
@@ -15,7 +15,7 @@ from dataset import prepare_data, Dataset
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 parser = argparse.ArgumentParser(description="Denoise")
-parser.add_argument("--preprocess", type=bool, default=False, help='run prepare_data or not')  # 第一次运行时设置为True
+parser.add_argument("--preprocess", type=bool, default=True, help='run prepare_data or not')  # 第一次运行时设置为True
 parser.add_argument("--batchSize", type=int, default=16, help="Training batch size")
 parser.add_argument("--num_of_layers", type=int, default=17, help="Number of total layers")
 parser.add_argument("--epochs", type=int, default=50, help="Number of training epochs")
@@ -38,7 +38,7 @@ def main():
 
     # Build model
     if opt.model == 'REDNet':
-        net = REDNet20()
+        net = REDNet30()
     elif opt.model == 'DnCNN':
         net = DnCNN(channels=1, num_of_layers=opt.num_of_layers)
         net.apply(weights_init_kaiming)  # 为DnCNN设置的初始化权重
