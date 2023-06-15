@@ -1,3 +1,3 @@
 # Image-Denoise
 
-## How to run
+## 研究上下采样等细节
