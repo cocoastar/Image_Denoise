@@ -7,64 +7,30 @@
 * HDF5 for Python
 * Scikit-Image
 ### 运行训练函数  
-`<
-python train.py \
-  --preprocess True \
-  --num_of_layers 17 \
-  --mode S \
-  --noiseL 25 \
-  --val_noiseL 25>`
-#### 四级标题  
-##### 五级标题  
-###### 六级标题 
-二、编辑基本语法  
-1、字体格式强调
- 我们可以使用下面的方式给我们的文本添加强调的效果
-*强调*  (示例：斜体)  
- _强调_  (示例：斜体)  
-**加重强调**  (示例：粗体)  
- __加重强调__ (示例：粗体)  
-***特别强调*** (示例：粗斜体)  
-___特别强调___  (示例：粗斜体)  
-2、代码  
-`<hello world>`  
-3、代码块高亮  
 ```
-@Override
-protected void onDestroy() {
-    EventBus.getDefault().unregister(this);
-    super.onDestroy();
-}
-```  
-4、表格 （建议在表格前空一行，否则可能影响表格无法显示）
+python train.py \  
+  --preprocess True \  
+  --num_of_layers 17 \
+  --out logs/DnCNN \  
+  --noiseL 25 \  
+  --val_noiseL 25
+  --model DnCNN \
+```
+其中，preprocess参数在第一次训练时设置为True，它的作用是预处理训练集并生成h5文件，若文件目录下已存在该文件，则设置为False；num_of_layers为网络层数，可根据需要修改；out参数为训练模型参数所保存的位置，可根据自己的文件目录而定；noiseL为训练时所添加的噪声水平；model参数为训练的网络模型名称，可选DnCNN和REDNet。  
+### 运行测试函数
+```
+python test.py \  
+  --num_of_layers 17 \  
+  --logdir logs/DnCNN \  
+  --test_data Set12 \  
+  --test_noiseL 15 \
+  --model DnCNN  
+```
+注意，logdir为train函数保存的参数位置，test_data为测试数据集，可选Set12和Set68。
+
+表格 （建议在表格前空一行，否则可能影响表格无法显示）
  
  表头  | 表头  | 表头
  ---- | ----- | ------  
  单元格内容  | 单元格内容 | 单元格内容 
  单元格内容  | 单元格内容 | 单元格内容  
- 
-5、其他引用
-图片  
-![图片名称](https://www.baidu.com/img/bd_logo1.png)  
-链接  
-[链接名称](https://www.baidu.com/)    
-6、列表 
-1. 项目1  
-2. 项目2  
-3. 项目3  
-   * 项目1 （一个*号会显示为一个黑点，注意⚠️有空格，否则直接显示为*项目1） 
-   * 项目2   
- 
-7、换行（建议直接在前一行后面补两个空格）
-直接回车不能换行，  
-可以在上一行文本后面补两个空格，  
-这样下一行的文本就换行了。
-或者就是在两行文本直接加一个空行。
-也能实现换行效果，不过这个行间距有点大。  
- 
-8、引用
-> 第一行引用文字  
-> 第二行引用文字  
-————————————————
-版权声明：本文为CSDN博主「snowzhao210」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。
-原文链接：https://blog.csdn.net/qq_31796651/article/details/80803599
